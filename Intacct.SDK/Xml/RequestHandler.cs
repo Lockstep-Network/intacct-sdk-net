@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Threading.Tasks;
 using Intacct.SDK.Credentials;
 using Intacct.SDK.Functions;
@@ -27,13 +28,20 @@ namespace Intacct.SDK.Xml
 {
     public class RequestHandler
     {
-        public const string Version = "3.2.2";
+        public static readonly string Version;
 
         public ClientConfig ClientConfig;
 
         public RequestConfig RequestConfig;
 
         public string EndpointUrl;
+
+        static RequestHandler()
+        {
+            var assembly = typeof(ClientConfig).Assembly;
+            Version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+                      ?? assembly.GetName().Version.ToString();
+        }
 
         public RequestHandler(ClientConfig clientConfig, RequestConfig requestConfig)
         {
@@ -43,7 +51,7 @@ namespace Intacct.SDK.Xml
 
             this.RequestConfig = requestConfig;
         }
-        
+
         public async Task<OnlineResponse> ExecuteOnline(List<IFunction> content)
         {
             if (!string.IsNullOrEmpty(this.RequestConfig.PolicyId))
@@ -83,7 +91,7 @@ namespace Intacct.SDK.Xml
 
             return response;
         }
-        
+
         private HttpMessageHandler GetHttpMessageHandler()
         {
             if (this.ClientConfig.MockHandler != null)
@@ -103,7 +111,7 @@ namespace Intacct.SDK.Xml
                 {
                     AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate
                 };
-                
+
                 if (this.ClientConfig.Logger != null)
                 {
                     return new LoggingHandler(httpClientHandler, this.ClientConfig.Logger, this.ClientConfig.LogMessageFormatter, this.ClientConfig.LogLevel);
@@ -130,7 +138,7 @@ namespace Intacct.SDK.Xml
             requestXml.Position = 0;
             StreamContent content = new StreamContent(requestXml);
             content.Headers.ContentType = new MediaTypeHeaderValue("application/xml");
-            
+
             for (int attempt = 0; attempt <= this.RequestConfig.MaxRetries; attempt++)
             {
                 if (attempt > 0)
@@ -164,7 +172,7 @@ namespace Intacct.SDK.Xml
                         Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
                         return stream;
                     }
-                    
+
                     // Throw exception for non-500 level errors
                     response.EnsureSuccessStatusCode();
                 }
