@@ -12,7 +12,7 @@ jobs:
     
     strategy:
       matrix:
-        dotnet-version: ['3.1', '6.x']
+        dotnet-version: ['6.x']
         
     name: .NET v${{ matrix.dotnet-version }}
 
@@ -25,7 +25,6 @@ jobs:
         uses: actions/setup-dotnet@v2
         with:
           dotnet-version: |
-            3.1
             6.x
       
       - name: Install dependencies for .NET ${{ matrix.dotnet-version }}
@@ -36,5 +35,3 @@ jobs:
         
       - name: Test
         run: dotnet test
-        
-      
